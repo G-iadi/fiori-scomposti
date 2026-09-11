@@ -4,6 +4,10 @@
   const INACTIVE_OPACITY = 1;
   const FEATHER_PX = 28;
   const FADE_MS = 420;
+  const ASCII_CHAR_MS = 1000;
+  const ASCII_CHAR_POOL =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%*+=";
+  const ASCII_RAMP_LEN = 64;
   const PAPER_RGB = [243, 239, 228];
   const HIT_ORDER = ["pistillo", "strami", "corona", "tepali"];
   const DRAW_ORDER = ["tepali", "corona", "strami", "pistillo"];
@@ -55,6 +59,16 @@
   let holeApplied = null;
   let tm = null;
   let asciiTexture = null;
+  /** @type {ReturnType<typeof setInterval> | null} */
+  let asciiCharTimer = null;
+
+  function randomCharRamp() {
+    let ramp = " ";
+    for (let i = 1; i < ASCII_RAMP_LEN; i++) {
+      ramp += ASCII_CHAR_POOL[(Math.random() * ASCII_CHAR_POOL.length) | 0];
+    }
+    return ramp;
+  }
 
   function walk(item, fn) {
     fn(item);
@@ -126,10 +140,20 @@
 
   function configureTexture(texture) {
     texture
-      .characters(" .'`^,:;Il!i><~+_-][}{1)(|tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$")
+      .characters(randomCharRamp())
       .charColorMode("sampled")
       .cellColorMode("fixed")
       .cellColor(...PAPER_RGB);
+  }
+
+  function scrambleAsciiChars() {
+    if (!asciiTexture) return;
+    asciiTexture.characters(randomCharRamp());
+  }
+
+  function startAsciiCharScramble() {
+    if (asciiCharTimer) return;
+    asciiCharTimer = setInterval(scrambleAsciiChars, ASCII_CHAR_MS);
   }
 
   function sizeAsciiCanvas(width, height) {
@@ -154,7 +178,9 @@
       canvas: asciiCanvas,
       width,
       height,
-      fontSize: 5,
+      fontSize: 11,
+      fontSource:
+        "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@5.1.0/latin-700-normal.woff",
       frameRate: 8,
     });
     sizeAsciiCanvas(width, height);
@@ -163,6 +189,7 @@
     tm.setup(() => {
       asciiTexture = tm.createTexture(asciiSource);
       configureTexture(asciiTexture);
+      startAsciiCharScramble();
     });
 
     tm.draw(() => {
