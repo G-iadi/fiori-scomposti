@@ -21,8 +21,12 @@ La Parte dell’androceo. Nel file SVG l’id resta `strami`; nel modello e in i
 _Avoid_: strami, stamen, antere (come nome della Parte intera)
 
 **Nome**:
-L’unica informazione mostrata su una Parte: Tepali, Corona, Stami, Pistillo.
-_Avoid_: scheda, didascalia, descrizione, tooltip
+Il titolo di una Parte attiva: Tepali, Corona, Stami, Pistillo.
+_Avoid_: scheda, tooltip
+
+**Descrizione**:
+Una frase breve sotto il Nome, che dice a cosa serve quella Parte.
+_Avoid_: saggio, scheda lunga, didascalia tecnica
 
 **Invito**:
 Il messaggio a riposo sopra il canvas, quando nessuna Parte è in evidenza. Il testo è «sFIORami».
@@ -37,7 +41,7 @@ La resa fotografica di una Parte, visibile solo quando quella Parte è attiva.
 _Avoid_: SVG, PNG, raster (come nome del concetto)
 
 **Parte attiva**:
-L’unica Parte in evidenza: si vede la sua Immagine, le altre restano ASCII in trasparenza, e compare il suo Nome sul baricentro. Hover e fissaggio sono lo stesso stato visivo; il tap su un’altra Parte sposta il fissaggio.
+L’unica Parte in evidenza: si vede la sua Immagine con bordo ASCII sfumato, le altre restano ASCII, e in alto compaiono Nome + Descrizione al posto dell’Invito. Hover e fissaggio sono lo stesso stato visivo; il tap su un’altra Parte sposta il fissaggio.
 _Avoid_: hover state, selezione, focus (come nome del concetto)
 
 **Vuoto**:

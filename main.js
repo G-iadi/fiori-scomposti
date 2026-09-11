@@ -2,6 +2,8 @@
   const SVG_URL = "asset/passiflora/passiflora.svg";
   const VIEW_RATIO = 506.5 / 751.76;
   const INACTIVE_OPACITY = 1;
+  const FEATHER_PX = 28;
+  const FADE_MS = 420;
   const PAPER_RGB = [243, 239, 228];
   const HIT_ORDER = ["pistillo", "strami", "corona", "tepali"];
   const DRAW_ORDER = ["tepali", "corona", "strami", "pistillo"];
@@ -11,14 +13,23 @@
     strami: "Stami",
     pistillo: "Pistillo",
   };
+  const DESCRIZIONI = {
+    tepali: "Petali e sepali quasi uguali: l’involucro esterno del fiore.",
+    corona: "Corona di filamenti colorati, tipica della passiflora.",
+    strami: "Organi maschili: filamenti e antere che portano il polline.",
+    pistillo: "Organo femminile: ovario, stilo e stigmi al centro del fiore.",
+  };
 
   const canvas = document.getElementById("flower");
   const asciiCanvas = document.getElementById("ascii");
   const stage = document.getElementById("stage");
   const nomeEl = document.getElementById("nome");
+  const nomeLabelEl = document.getElementById("nome-label");
+  const nomeDescEl = document.getElementById("nome-desc");
   const invitoEl = document.getElementById("invito");
   const asciiSource = document.createElement("canvas");
   const maskCanvas = document.createElement("canvas");
+  const softCanvas = document.createElement("canvas");
 
   paper.setup(canvas);
   paper.view.backgroundColor = new paper.Color(243 / 255, 239 / 255, 228 / 255);
@@ -33,6 +44,15 @@
   let hovered = null;
   /** @type {string | null} */
   let fissata = null;
+  /** @type {Record<string, number>} */
+  const opacityNow = {};
+  /** @type {Record<string, number>} */
+  const opacityTarget = {};
+  /** @type {number | null} */
+  let fadeRaf = null;
+  let fadeLast = 0;
+  /** @type {string | null} */
+  let holeApplied = null;
   let tm = null;
   let asciiTexture = null;
 
@@ -99,6 +119,9 @@
     ctx.fillStyle = `rgb(${PAPER_RGB.join(",")})`;
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(canvas, 0, 0, width, height);
+    for (const id of HIT_ORDER) {
+      if (parti[id]) parti[id].opacity = opacityNow[id] ?? 0;
+    }
   }
 
   function configureTexture(texture) {
@@ -163,6 +186,9 @@
   }
 
   function updateAsciiHole(activeId) {
+    if (activeId === holeApplied) return;
+    holeApplied = activeId;
+
     const { width, height } = viewSize();
     if (!activeId || !clip[activeId]) {
       asciiCanvas.style.maskImage = "none";
@@ -196,23 +222,82 @@
       return;
     }
 
-    const shape = clip[id] || parti[id];
-    const point = paper.view.projectToView(shape.bounds.center);
     nomeEl.hidden = false;
-    nomeEl.textContent = NOMI[id];
-    nomeEl.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
+    nomeLabelEl.textContent = NOMI[id];
+    nomeDescEl.textContent = DESCRIZIONI[id] || "";
     invitoEl.classList.add("is-hidden");
+  }
+
+  function holeId() {
+    const current = attiva();
+    if (current) return current;
+    let best = null;
+    let bestOpacity = 0;
+    for (const id of HIT_ORDER) {
+      const v = opacityNow[id] ?? 0;
+      if (v > bestOpacity) {
+        bestOpacity = v;
+        best = id;
+      }
+    }
+    return bestOpacity > 0.01 ? best : null;
+  }
+
+  function paintOpacities() {
+    for (const id of HIT_ORDER) {
+      const item = parti[id];
+      if (!item) continue;
+      item.opacity = opacityNow[id] ?? 0;
+    }
+    paper.view.update();
+  }
+
+  function tickFade(now) {
+    const dt = Math.min(48, now - fadeLast);
+    fadeLast = now;
+    const step = dt / FADE_MS;
+    let busy = false;
+
+    for (const id of HIT_ORDER) {
+      const target = opacityTarget[id] ?? 0;
+      let v = opacityNow[id] ?? 0;
+      if (Math.abs(v - target) <= step) {
+        v = target;
+      } else if (v < target) {
+        v += step;
+        busy = true;
+      } else {
+        v -= step;
+        busy = true;
+      }
+      if (v !== target) busy = true;
+      opacityNow[id] = v;
+    }
+
+    paintOpacities();
+    updateAsciiHole(holeId());
+
+    if (busy) {
+      fadeRaf = requestAnimationFrame(tickFade);
+    } else {
+      fadeRaf = null;
+    }
+  }
+
+  function startFade() {
+    if (fadeRaf) return;
+    fadeLast = performance.now();
+    updateAsciiHole(holeId());
+    fadeRaf = requestAnimationFrame(tickFade);
   }
 
   function applyOpacity() {
     const current = attiva();
     for (const id of HIT_ORDER) {
-      const item = parti[id];
-      if (!item) continue;
-      item.opacity = current === id ? 1 : 0;
+      opacityTarget[id] = current === id ? 1 : 0;
     }
-    updateAsciiHole(current);
     updateNome();
+    startFade();
   }
 
   function hitParte(point) {
@@ -286,6 +371,9 @@
         continue;
       }
       parti[id] = part;
+      opacityNow[id] = 0;
+      opacityTarget[id] = 0;
+      part.opacity = 0;
       const mask = findClipMask(part);
       if (mask) clip[id] = mask;
     }
@@ -294,6 +382,7 @@
   function syncAscii() {
     captureAsciiSource();
     initTextmode();
+    holeApplied = null;
     applyOpacity();
   }
 

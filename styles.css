@@ -24,18 +24,53 @@ body {
   padding: 1.75rem 1.25rem 2.5rem;
 }
 
-.invito {
+.caption {
+  display: grid;
+  place-items: center;
+  width: min(100%, 34rem);
+  min-height: 4.75rem;
   margin: 0 0 0.85rem;
+  text-align: center;
+}
+
+.invito {
+  grid-area: 1 / 1;
+  margin: 0;
   font-family: Outfit, system-ui, sans-serif;
   font-size: clamp(1.45rem, 3.4vw, 2.15rem);
   font-weight: 400;
   letter-spacing: 0.03em;
   color: var(--ink);
-  min-height: 1.5em;
 }
 
 .invito.is-hidden {
   visibility: hidden;
+}
+
+.nome {
+  grid-area: 1 / 1;
+  max-width: 100%;
+  pointer-events: none;
+  font-family: Outfit, system-ui, sans-serif;
+  color: var(--ink);
+}
+
+.nome-label {
+  display: block;
+  font-size: clamp(1.35rem, 3.2vw, 2rem);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+}
+
+.nome-desc {
+  margin: 0.4em 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--mute);
+  text-wrap: pretty;
 }
 
 .masthead {
@@ -86,21 +121,4 @@ body {
   height: 100%;
   pointer-events: none;
   z-index: 1;
-}
-
-.nome {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  font-family: Outfit, system-ui, sans-serif;
-  font-size: clamp(1.15rem, 2.6vw, 1.7rem);
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--paper) 82%, white);
-  padding: 0.15em 0.55em 0.2em;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  z-index: 2;
 }
